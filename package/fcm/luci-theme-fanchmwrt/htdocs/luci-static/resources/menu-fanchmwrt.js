@@ -30,9 +30,8 @@ return baseclass.extend({
 		this.renderBreadcrumb(tree);
 		this.setup_mobile_menu();
 		this.setup_content_scrollbar();
-		const category = L.env.dispatchpath[1]
-			? (this.getMenuCategory(L.env.dispatchpath[1]) === 'menu-item-basic' ? 'basic' : 'advanced')
-			: localStorage.getItem('luci-menu-category') || 'basic';
+		// 强制固定高级模式，不再读取localStorage
+		const category = 'advanced';
 		this.switchCategory(category);
 
 		let node = tree;
@@ -82,56 +81,23 @@ return baseclass.extend({
 	},
 
 	renderCategoryNav() {
-		const savedCategory = localStorage.getItem('luci-menu-category') || 'basic';
-		
 		const titleText = (
 			(L && L.env && L.env.hostname) ||
 			(document.querySelector('header a.brand') && document.querySelector('header a.brand').textContent || '').trim() ||
 			'FanchmWrt'
 		);
-		const brandElement = E('a', { 'class': 'top-navbar-brand', 'href': L.url('admin', 'fwx_dashboard') }, [
+		const brandElement = E('a', { 'class': 'top-navbar-brand', 'href': L.url('admin', 'status', 'overview') }, [
 			E('span', { 'class': 'top-navbar-title' }, [titleText])
 		]);
 		brandElement.addEventListener('click', function() {
-			localStorage.setItem('luci-menu-category', 'basic');
+			// 点击logo也固定高级模式
+			localStorage.setItem('luci-menu-category', 'advanced');
 		});
 		document.querySelector('.sidebar_brand').addEventListener('click', function() {
-			localStorage.setItem('luci-menu-category', 'basic');
+			localStorage.setItem('luci-menu-category', 'advanced');
 		});
-		
-		const createModeItem = (category, title, href) => {
-			const item = E('li', {
-				'class': 'mode-item' + (savedCategory === category ? ' active' : ''),
-				'data-category': category
-			}, [
-				E('a', { 'href': href }, [
-					E('span', { 'class': 'mode-check', 'aria-hidden': 'true' }),
-					E('span', { 'class': 'mode-title' }, [_(title)])
-				])
-			]);
 
-			item.querySelector('a').addEventListener('click', function() {
-				localStorage.setItem('luci-menu-category', category);
-			});
-
-			return item;
-		};
-
-		const modeMenu = E('div', { 'class': 'top-user-menu top-mode-menu' }, [
-			E('button', {
-				'class': 'top-user-button top-more-button',
-				'type': 'button',
-				'aria-label': _('Mode menu')
-			}, [
-				E('span', { 'class': 'mode_button_label' }, [savedCategory === 'advanced' ? _('Advanced Mode') : _('Normal Mode')]),
-				E('span', { 'class': 'top-more-icon' }, ['⋮'])
-			]),
-			E('ul', { 'class': 'top-user-dropdown top-mode-dropdown' }, [
-				createModeItem('basic', 'Normal Mode', L.url('admin', 'fwx_dashboard')),
-				createModeItem('advanced', 'Advanced Mode', L.url('admin', 'status', 'overview'))
-			])
-		]);
-
+		// ========== 删掉模式切换下拉，只保留用户菜单 ==========
 		const userMenu = E('div', { 'class': 'top-user-menu top-profile-menu' }, [
 			E('button', {
 				'class': 'top-user-button',
@@ -150,7 +116,7 @@ return baseclass.extend({
 				E('li', { 'class': 'system-item' }, [
 					E('a', { 'href': L.url('admin', 'system', 'admin') }, [_('Change Password')])
 				]),
-				E('li', { 'class': 'logout-item' }, [
+				E('li', { 'logout-item' }, [
 					E('a', { 'href': '#' }, [_('Logout')])
 				])
 			])
@@ -158,7 +124,6 @@ return baseclass.extend({
 
 		const closeTopMenus = () => {
 			userMenu.classList.remove('open');
-			modeMenu.classList.remove('open');
 		};
 
 		const userBtn = userMenu.querySelector('.top-user-button');
@@ -169,17 +134,6 @@ return baseclass.extend({
 			closeTopMenus();
 			if (shouldOpen) {
 				userMenu.classList.add('open');
-			}
-		});
-
-		const modeBtn = modeMenu.querySelector('.top-more-button');
-		modeBtn.addEventListener('click', function(ev) {
-			ev.preventDefault();
-			ev.stopPropagation();
-			const shouldOpen = !modeMenu.classList.contains('open');
-			closeTopMenus();
-			if (shouldOpen) {
-				modeMenu.classList.add('open');
 			}
 		});
 
@@ -202,7 +156,7 @@ return baseclass.extend({
 		});
 
 		document.addEventListener('click', function(ev) {
-			if (!userMenu.contains(ev.target) && !modeMenu.contains(ev.target)) {
+			if (!userMenu.contains(ev.target)) {
 				closeTopMenus();
 			}
 		});
@@ -221,7 +175,7 @@ return baseclass.extend({
 			}, ['☰']),
 			brandElement,
 			E('div', { 'class': 'top_navbar_context' }, [document.title]),
-			E('div', { 'class': 'top-navbar-right' }, [userMenu, modeMenu])
+			E('div', { 'class': 'top-navbar-right' }, [userMenu])
 		]);
 		const topNavbar = E('div', { 'class': 'top-navbar' }, [topNavbarContent]);
 
@@ -230,7 +184,7 @@ return baseclass.extend({
 			existing_navbar.remove();
 		document.body.insertBefore(topNavbar, document.body.firstChild);
 	},
-	
+
 
 	renderBreadcrumb(tree) {
 		if (!L.env.dispatchpath || L.env.dispatchpath.length === 0) {
@@ -250,7 +204,7 @@ return baseclass.extend({
 				
 				if (i === 0 && pathSegment === 'admin') {
 					const homeItem = E('li', { 'class': 'home-item' }, [
-						E('a', { 'href': L.url('admin', 'fwx_dashboard'), 'title': _('Home'), 'aria-label': _('Home') }, [
+						E('a', { 'href': L.url('admin', 'status', 'overview'), 'title': _('Home'), 'aria-label': _('Home') }, [
 							E('span', { 'class': 'home-icon', 'aria-hidden': 'true' }, ['🏠'])
 						])
 					]);
@@ -291,16 +245,11 @@ return baseclass.extend({
 	},
 
 	switchCategory(category) {
-		const mode_label = document.querySelector('.mode_button_label');
-		if (mode_label)
-			mode_label.textContent = category === 'advanced' ? _('Advanced Mode') : _('Normal Mode');
-		document.querySelectorAll('.top-user-dropdown .mode-item').forEach((item) => {
-			item.classList.toggle('active', item.getAttribute('data-category') === category);
-		});
+		// 固定高级模式，只显示高级菜单
 		document.querySelectorAll('#topmenu > li').forEach((item) => {
-			item.hidden = !item.classList.contains('menu-item-' + category);
+			item.hidden = !item.classList.contains('menu-item-advanced');
 		});
-		localStorage.setItem('luci-menu-category', category);
+		localStorage.setItem('luci-menu-category', 'advanced');
 	},
 
 	getMenuCategory(menuName) {
@@ -348,7 +297,7 @@ return baseclass.extend({
 		const ul = level === 0 ? document.querySelector('#topmenu') : E('ul', { 'class': 'dropdown-menu' });
 		if (level > 1)
 			return ul;
-		ui.menu.getChildren(tree).forEach((child) => {
+		ui.menu.getChildren(tree).forEach((child, index) => {
 			const submenu = this.renderMainMenu(child, url + '/' + child.name, level + 1);
 			const has_submenu = level === 0 && submenu.children.length > 0;
 			const is_active = L.env.dispatchpath[level + 1] === child.name && L.env.dispatchpath[level] === tree.name;
