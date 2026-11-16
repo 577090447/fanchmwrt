@@ -1,7 +1,6 @@
 'use strict';
 'require baseclass';
 'require ui';
-
 return baseclass.extend({
 	menuIcons: {
 		'fwx_network': 'fwx_network',
@@ -23,7 +22,6 @@ return baseclass.extend({
 	__init__() {
 		ui.menu.load().then(L.bind(this.render, this));
 	},
-
 	render(tree) {
 		this.renderModeMenu(tree);
 		this.renderCategoryNav();
@@ -33,7 +31,6 @@ return baseclass.extend({
 		// 强制固定高级模式，不再读取localStorage
 		const category = 'advanced';
 		this.switchCategory(category);
-
 		let node = tree;
 		let url = '';
 		for (let i = 0; i < 3 && node && L.env.dispatchpath.length >= 3; i++) {
@@ -43,7 +40,6 @@ return baseclass.extend({
 		if (node && L.env.dispatchpath.length >= 3)
 			this.renderTabMenu(node, url, 0);
 	},
-
 	setup_content_scrollbar() {
 		const content = document.getElementById('maincontent');
 		if (!content)
@@ -57,7 +53,6 @@ return baseclass.extend({
 		content.addEventListener('scroll', show_scrollbar, { passive: true });
 		content.addEventListener('wheel', show_scrollbar, { passive: true });
 	},
-
 	setup_mobile_menu() {
 		const toggle = document.querySelector('.mobile-menu-toggle');
 		const sidebar = document.querySelector('.sidebar-nav');
@@ -79,12 +74,11 @@ return baseclass.extend({
 		});
 		media_query.addEventListener('change', () => set_open(false));
 	},
-
 	renderCategoryNav() {
 		const titleText = (
 			(L && L.env && L.env.hostname) ||
 			(document.querySelector('header a.brand') && document.querySelector('header a.brand').textContent || '').trim() ||
-			'FanchmWrt'
+			'OpenWrt'
 		);
 		const brandElement = E('a', { 'class': 'top-navbar-brand', 'href': L.url('admin', 'status', 'overview') }, [
 			E('span', { 'class': 'top-navbar-title' }, [titleText])
@@ -96,7 +90,6 @@ return baseclass.extend({
 		document.querySelector('.sidebar_brand').addEventListener('click', function() {
 			localStorage.setItem('luci-menu-category', 'advanced');
 		});
-
 		// ========== 删掉模式切换下拉，只保留用户菜单 ==========
 		const userMenu = E('div', { 'class': 'top-user-menu top-profile-menu' }, [
 			E('button', {
@@ -121,11 +114,9 @@ return baseclass.extend({
 				])
 			])
 		]);
-
 		const closeTopMenus = () => {
 			userMenu.classList.remove('open');
 		};
-
 		const userBtn = userMenu.querySelector('.top-user-button');
 		userBtn.addEventListener('click', function(ev) {
 			ev.preventDefault();
@@ -136,14 +127,12 @@ return baseclass.extend({
 				userMenu.classList.add('open');
 			}
 		});
-
 		userMenu.querySelectorAll('.system-item a').forEach((link) => {
 			link.addEventListener('click', function() {
 				localStorage.setItem('luci-menu-category', 'advanced');
 				closeTopMenus();
 			});
 		});
-
 		const logoutLink = userMenu.querySelector('.logout-item a');
 		logoutLink.addEventListener('click', function(ev) {
 			ev.preventDefault();
@@ -154,19 +143,16 @@ return baseclass.extend({
 			}));
 			window.location.href = L.url('admin', 'logout');
 		});
-
 		document.addEventListener('click', function(ev) {
 			if (!userMenu.contains(ev.target)) {
 				closeTopMenus();
 			}
 		});
-
 		document.addEventListener('keydown', function(ev) {
 			if (ev.key === 'Escape') {
 				closeTopMenus();
 			}
 		});
-
 		const topNavbarContent = E('div', { 'class': 'top-navbar-content' }, [
 			E('button', {
 				'class': 'mobile-menu-toggle', 'type': 'button',
@@ -178,23 +164,18 @@ return baseclass.extend({
 			E('div', { 'class': 'top-navbar-right' }, [userMenu])
 		]);
 		const topNavbar = E('div', { 'class': 'top-navbar' }, [topNavbarContent]);
-
 		const existing_navbar = document.querySelector('.top-navbar');
 		if (existing_navbar)
 			existing_navbar.remove();
 		document.body.insertBefore(topNavbar, document.body.firstChild);
 	},
-
-
 	renderBreadcrumb(tree) {
 		if (!L.env.dispatchpath || L.env.dispatchpath.length === 0) {
 			return;
 		}
-
 		const breadcrumbItems = [];
 		let currentNode = tree;
 		let currentPath = '';
-
 		for (let i = 0; i < L.env.dispatchpath.length && currentNode; i++) {
 			const pathSegment = L.env.dispatchpath[i];
 			currentPath += (currentPath ? '/' : '') + pathSegment;
@@ -218,11 +199,9 @@ return baseclass.extend({
 				}
 			}
 		}
-
 		if (breadcrumbItems.length === 0) {
 			return;
 		}
-
 		const breadcrumbContainer = E('div', { 'class': 'breadcrumb-container' }, [
 			E('ol', { 'class': 'breadcrumb' }, breadcrumbItems)
 		]);
@@ -232,7 +211,6 @@ return baseclass.extend({
 			navbar_breadcrumb.lastElementChild.setAttribute('aria-current', 'page');
 			navbar_context.replaceChildren(navbar_breadcrumb);
 		}
-
 		const mainContent = document.querySelector('#maincontent') || document.querySelector('.main');
 		if (mainContent) {
 			const existingBreadcrumb = mainContent.querySelector('.breadcrumb-container');
@@ -243,7 +221,6 @@ return baseclass.extend({
 			mainContent.insertBefore(breadcrumbContainer, mainContent.firstChild);
 		}
 	},
-
 	switchCategory(category) {
 		// 固定高级模式，只显示高级菜单
 		document.querySelectorAll('#topmenu > li').forEach((item) => {
@@ -251,7 +228,6 @@ return baseclass.extend({
 		});
 		localStorage.setItem('luci-menu-category', 'advanced');
 	},
-
 	getMenuCategory(menuName) {
 		const normalizedName = (menuName || '').toLowerCase();
 		if (normalizedName.startsWith('fwx')) {
@@ -259,7 +235,6 @@ return baseclass.extend({
 		}
 		return 'menu-item-advanced';
 	},
-
 	renderTabMenu(tree, url, level) {
 		level = level || 0;
 		
@@ -267,31 +242,23 @@ return baseclass.extend({
 		const ul = E('ul', { 'class': 'tabs' });
 		const children = ui.menu.getChildren(tree);
 		let activeNode = null;
-
 		children.forEach(child => {
 			const isActive = (L.env.dispatchpath[3 + level] == child.name);
 			const activeClass = isActive ? ' active' : '';
 			const className = 'tabmenu-item-%s %s'.format(child.name, activeClass);
-
 			ul.appendChild(E('li', { 'class': className }, [
 				E('a', { 'href': L.url(url, child.name) }, [ _(child.title) ] )]));
-
 			if (isActive)
 				activeNode = child;
 		});
-
 		if (ul.children.length == 0)
 			return E([]);
-
 		container.appendChild(ul);
 		container.style.display = '';
-
 		if (activeNode)
 			this.renderTabMenu(activeNode, url + '/' + activeNode.name, level + 1);
-
 		return ul;
 	},
-
 	renderMainMenu(tree, url, level) {
 		level = level || 0;
 		const ul = level === 0 ? document.querySelector('#topmenu') : E('ul', { 'class': 'dropdown-menu' });
@@ -332,7 +299,6 @@ return baseclass.extend({
 		if (level === 0) ul.style.display = '';
 		return ul;
 	},
-
 	renderModeMenu(tree) {
 		const ul = document.querySelector('#modemenu');
 		const menu = document.querySelector('#topmenu');
